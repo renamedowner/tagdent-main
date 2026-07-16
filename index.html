@@ -379,6 +379,14 @@
               <label for="co-comment">Комментарий к заказу</label>
               <textarea id="co-comment" name="comment" rows="2" placeholder="Удобное время, домофон и т.п."></textarea>
             </div>
+            <div class="field" id="promoField" style="display:none">
+              <label for="co-promo">Промокод</label>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="co-promo" placeholder="Введите код" style="flex:1;text-transform:uppercase">
+                <button type="button" class="btn btn--ghost btn--sm" id="promoApplyBtn" style="padding:8px 16px">Применить</button>
+              </div>
+              <span id="promoMsg" style="font-size:13px;margin-top:4px;display:block"></span>
+            </div>
             <button type="submit" class="btn btn--primary btn--lg btn--block">Оформить заказ</button>
             <div class="cart__success" id="cartSuccess">
               <span class="dot dot--green"></span> Заказ отправлен! Мы свяжемся с вами.

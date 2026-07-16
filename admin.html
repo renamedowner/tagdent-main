@@ -3,386 +3,573 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tag Dent — Администрирование магазина</title>
+  <title>Tag Dent — Админ-панель</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <!-- ⚠️ ВАЖНО: замени URL ниже на свой Render-сервер -->
   <script src="https://tagdent-api.onrender.com/api/env.js"></script>
   <style>
-    body { background: var(--bg); padding: 40px 24px; }
-    .admin { max-width: 900px; margin: 0 auto; }
-    .admin h1 { font-size: 28px; margin-bottom: 8px; }
-    .admin p { color: var(--muted); margin-bottom: 24px; }
-    .admin-login { max-width: 360px; margin: 80px auto; text-align: center; }
-    .admin-login h1 { font-size: 24px; margin-bottom: 20px; }
-    .admin-login .field input { width: 100%; }
-    .admin-error { color: #DC2626; font-size: 14px; margin-top: 8px; display: none; }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-    .admin-header a { color: var(--burgundy); font-weight: 600; }
-    .admin-grid { display: grid; gap: 16px; }
-    .admin-card { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 20px; background: var(--surface); border-radius: var(--radius-sm); border: 1px solid rgba(141,184,122,.3); }
-    .admin-card__info { flex: 1; }
-    .admin-card__name { font-weight: 600; font-size: 15px; }
-    .admin-card__meta { font-size: 13px; color: var(--muted); }
-    .admin-card__price { font-family: var(--font-head); font-weight: 700; color: var(--burgundy); }
-    .admin-card__actions { display: flex; gap: 8px; }
-    .admin-card__actions button { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 13px; transition: background .25s, color .25s; }
-    .admin-card__actions .edit-btn:hover { background: var(--pistachio); color: #fff; border-color: var(--pistachio); }
-    .admin-card__actions .del-btn:hover { background: #DC2626; color: #fff; border-color: #DC2626; }
-    .admin-form { display: grid; gap: 14px; padding: 24px; background: var(--surface); border-radius: var(--radius); border: 1px solid rgba(141,184,122,.3); margin-bottom: 28px; }
-    .admin-form h2 { font-size: 18px; }
-    .admin-form .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .admin-form .actions { display: flex; gap: 12px; }
-    .admin-form .actions .btn--ghost { color: var(--muted); border-color: var(--border); }
-    .admin-form .actions .btn--ghost:hover { color: var(--burgundy); }
-    .admin-empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-    .admin-notice { font-size: 13px; color: var(--muted); margin-top: 16px; padding: 12px 16px; background: rgba(141,184,122,.1); border-radius: var(--radius-sm); }
-    .admin-notice strong { color: var(--burgundy); }
-    .password-field { position: relative; }
-    .password-field input { padding-right: 44px; width: 100%; }
-    .password-field .toggle-pw { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 6px; }
-    .password-field .toggle-pw:hover { color: var(--burgundy); }
-    .form-info { font-size: 13px; color: var(--muted); }
-    @media (max-width: 600px) {
-      body { padding: 20px 12px; }
-      .admin-form .field-row { grid-template-columns: 1fr; }
-      .admin-card { flex-wrap: wrap; }
-      .admin-header { flex-direction: column; align-items: stretch; text-align: center; }
+    body { background: var(--bg); padding: 24px; font: 14px/1.6 'Roboto',sans-serif; color: #1a1a1a; }
+    .admin { max-width: 960px; margin: 0 auto; }
+    .admin h1 { font-family: 'Montserrat',sans-serif; font-size: 26px; margin-bottom: 4px; }
+    .admin-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+    .admin-login { max-width:360px; margin:80px auto; text-align:center; }
+    .admin-login h1 { font-size:24px; margin-bottom:16px; }
+    .admin-error { color:#DC2626; font-size:13px; display:none; margin-top:6px; }
+    .admin-tabs { display:flex; gap:4px; margin-bottom:20px; flex-wrap:wrap; }
+    .admin-tab { padding:10px 20px; border-radius:999px; border:1px solid var(--border); background:#fff; cursor:pointer; font-weight:600; font-size:13px; transition:.2s; color:var(--muted); }
+    .admin-tab:hover { border-color:var(--pistachio); color:var(--burgundy); }
+    .admin-tab.is-active { background:var(--pistachio); color:#fff; border-color:var(--pistachio); }
+    .admin-section { display:none; }
+    .admin-section.is-visible { display:block; }
+
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:24px; }
+    .stat-card { background:#fff; border-radius:12px; padding:20px; border:1px solid var(--border); text-align:center; }
+    .stat-card__num { font-family:'Montserrat',sans-serif; font-size:28px; font-weight:800; color:var(--burgundy); }
+    .stat-card__label { font-size:13px; color:var(--muted); margin-top:4px; }
+    .stat-card--green .stat-card__num { color:var(--pistachio); }
+    .stat-card--gold .stat-card__num { color:#D4A853; }
+    .status-bars { display:flex; flex-direction:column; gap:8px; margin-top:16px; }
+    .status-bar { display:flex; align-items:center; gap:10px; }
+    .status-bar__label { width:100px; font-size:13px; }
+    .status-bar__track { flex:1; height:8px; background:#eee; border-radius:999px; overflow:hidden; }
+    .status-bar__fill { height:100%; border-radius:999px; transition:width .5s; }
+    .status-bar__count { font-weight:700; font-size:13px; width:30px; text-align:right; }
+
+    .search-box { margin-bottom:16px; }
+    .search-box input { width:100%; padding:10px 14px; border-radius:999px; border:1px solid var(--border); font-size:14px; }
+
+    .orders-list { display:flex; flex-direction:column; gap:12px; }
+    .order-card { background:#fff; border-radius:12px; padding:16px 20px; border:1px solid var(--border); }
+    .order-card__top { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+    .order-card__id { font-weight:700; font-size:15px; }
+    .order-card__date { font-size:12px; color:var(--muted); }
+    .order-card__status { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600; }
+    .order-card__status--new { background:#E0F2FE; color:#0369A1; }
+    .order-card__status--work { background:#FEF9C3; color:#A16207; }
+    .order-card__status--done { background:#DCFCE7; color:#15803D; }
+    .order-card__status--cancel { background:#FEE2E2; color:#B91C1C; }
+    .order-card__client { font-size:14px; margin-bottom:4px; }
+    .order-card__client a { color:var(--burgundy); }
+    .order-card__items { font-size:13px; color:var(--muted); margin-bottom:6px; }
+    .order-card__total { font-family:'Montserrat',sans-serif; font-weight:700; color:var(--burgundy); font-size:16px; }
+    .order-card__actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .order-card__actions select, .order-card__actions input { padding:6px 12px; border-radius:999px; border:1px solid var(--border); font-size:13px; }
+    .order-card__actions button { padding:6px 16px; border-radius:999px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:13px; transition:.2s; }
+    .order-card__actions button:hover { background:var(--pistachio); color:#fff; border-color:var(--pistachio); }
+    .order-card__notes { font-size:13px; color:var(--muted); margin-top:6px; padding:8px 12px; background:#FAFAFA; border-radius:8px; }
+
+    .product-form { background:#fff; border-radius:12px; padding:20px; border:1px solid var(--border); margin-bottom:20px; display:grid; gap:12px; }
+    .product-form .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .product-form .actions { display:flex; gap:10px; }
+
+    .product-card { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 18px; background:#fff; border-radius:12px; border:1px solid var(--border); margin-bottom:8px; }
+    .product-card__info { flex:1; }
+    .product-card__name { font-weight:600; }
+    .product-card__meta { font-size:12px; color:var(--muted); }
+    .product-card__price { font-family:'Montserrat',sans-serif; font-weight:700; color:var(--burgundy); }
+    .product-card__img { width:48px; height:48px; border-radius:8px; object-fit:cover; background:#f5f5f5; display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden; }
+    .product-card__img img { width:100%; height:100%; object-fit:cover; }
+    .product-card__actions { display:flex; gap:6px; }
+    .product-card__actions button { padding:5px 12px; border-radius:999px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px; transition:.2s; }
+    .product-card__actions .edit-btn:hover { background:var(--pistachio); color:#fff; }
+    .product-card__actions .del-btn:hover { background:#DC2626; color:#fff; }
+
+    .promo-card { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#fff; border-radius:12px; border:1px solid var(--border); margin-bottom:8px; }
+    .promo-card__code { font-family:'Montserrat',sans-serif; font-weight:800; font-size:16px; letter-spacing:1px; }
+    .promo-card__info { font-size:13px; color:var(--muted); }
+    .promo-card__actions { display:flex; gap:6px; }
+    .promo-card__actions button { padding:4px 10px; border-radius:999px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px; }
+    .promo-card__actions .toggle-promo:hover { background:var(--pistachio); color:#fff; }
+    .promo-card__actions .del-promo:hover { background:#DC2626; color:#fff; }
+
+    .settings-grid { display:grid; gap:14px; }
+    .setting-field { display:grid; gap:4px; }
+    .setting-field label { font-weight:600; font-size:13px; }
+    .setting-field input, .setting-field textarea { padding:10px 14px; border-radius:8px; border:1px solid var(--border); font-size:14px; width:100%; }
+    .setting-field textarea { min-height:80px; resize:vertical; }
+
+    .upload-area { position:relative; }
+    .upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .upload-area .upload-preview { display:flex; align-items:center; gap:10px; padding:8px 14px; border-radius:8px; border:1px dashed var(--border); font-size:13px; color:var(--muted); }
+    .upload-area .upload-preview img { width:36px; height:36px; border-radius:6px; object-fit:cover; }
+    .upload-area .upload-preview .upload-btn-text { flex:1; }
+    .admin-empty { text-align:center; padding:40px 20px; color:var(--muted); }
+    @media (max-width:600px) {
+      .product-form .field-row { grid-template-columns:1fr; }
+      .admin-tabs { gap:6px; }
+      .admin-tab { padding:8px 14px; font-size:12px; }
     }
+    .password-field { position:relative; }
+    .password-field input { padding-right:44px; width:100%; }
+    .password-field .toggle-pw { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--muted); font-size:14px; padding:6px; }
+    .password-field .toggle-pw:hover { color:var(--burgundy); }
   </style>
 </head>
 <body>
-  <div class="admin" id="app">
-    <!-- LOGIN -->
-    <div class="admin-login" id="loginView">
-      <h1>🔐 Администрирование</h1>
-      <p>Введите пароль для управления товарами</p>
-      <form id="loginForm">
-        <div class="field password-field">
-          <label for="adminPass">Пароль</label>
-          <input type="password" id="adminPass" placeholder="Введите пароль">
-          <button type="button" class="toggle-pw" id="togglePw" aria-label="Показать пароль">👁</button>
-          <span class="admin-error" id="loginError">Неверный пароль</span>
-        </div>
-        <button type="submit" class="btn btn--primary btn--lg btn--block" style="margin-top:8px">Войти</button>
-      </form>
+<div class="admin" id="app">
+  <!-- LOGIN -->
+  <div class="admin-login" id="loginView">
+    <h1>🔐 Админ-панель</h1>
+    <p>Введите пароль для управления</p>
+    <form id="loginForm">
+      <div class="field password-field">
+        <label for="adminPass">Пароль</label>
+        <input type="password" id="adminPass" placeholder="Введите пароль">
+        <button type="button" class="toggle-pw" id="togglePw">👁</button>
+        <span class="admin-error" id="loginError">Неверный пароль</span>
+      </div>
+      <button type="submit" class="btn btn--primary btn--lg btn--block" style="margin-top:8px">Войти</button>
+    </form>
+  </div>
+
+  <!-- PANEL -->
+  <div id="panelView" style="display:none">
+    <div class="admin-header">
+      <div>
+        <h1>⚙️ Управление сайтом</h1>
+        <p style="color:var(--muted);font-size:13px">Товары, заказы, настройки</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="./" target="_blank" class="btn btn--ghost btn--sm">Перейти на сайт</a>
+        <button id="logoutBtn" class="btn btn--ghost btn--sm">Выйти</button>
+      </div>
     </div>
 
-    <!-- ADMIN PANEL -->
-    <div id="panelView" style="display:none">
-      <div class="admin-header">
-        <div>
-          <h1>🛒 Управление товарами</h1>
-          <p>Добавляйте, редактируйте и удаляйте товары магазина</p>
-        </div>
-        <div>
-          <a href="./" target="_blank" class="btn btn--ghost btn--sm">Перейти на сайт</a>
-          <button id="logoutBtn" class="btn btn--ghost btn--sm">Выйти</button>
-        </div>
-      </div>
+    <div class="admin-tabs" id="adminTabs">
+      <button class="admin-tab is-active" data-section="stats">📊 Статистика</button>
+      <button class="admin-tab" data-section="products">📦 Товары</button>
+      <button class="admin-tab" data-section="orders">🛒 Заказы</button>
+      <button class="admin-tab" data-section="promocodes">🏷 Промокоды</button>
+      <button class="admin-tab" data-section="users">👥 Пользователи</button>
+      <button class="admin-tab" data-section="settings">⚙️ Настройки</button>
+    </div>
 
-      <form class="admin-form" id="productForm">
-        <h2 id="formTitle">➕ Новый товар</h2>
+    <!-- STATS -->
+    <div class="admin-section is-visible" id="section-stats">
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="admin-section" id="section-products">
+      <form class="product-form" id="productForm">
+        <h2 id="formTitle" style="font-family:'Montserrat',sans-serif;font-size:18px">➕ Новый товар</h2>
         <div class="field-row">
-          <div class="field">
-            <label for="pName">Название товара *</label>
-            <input type="text" id="pName" required placeholder="Электрическая зубная щётка">
-          </div>
-          <div class="field">
-            <label for="pPrice">Цена (руб) *</label>
-            <input type="number" id="pPrice" required min="1" placeholder="2500">
-          </div>
+          <div class="field"><label>Название *</label><input type="text" id="pName" required placeholder="Электрическая щётка"></div>
+          <div class="field"><label>Цена (руб) *</label><input type="number" id="pPrice" required min="1" placeholder="2500"></div>
         </div>
-        <div class="field">
-          <label for="pDesc">Описание</label>
-          <textarea id="pDesc" rows="2" placeholder="Краткое описание товара"></textarea>
-        </div>
+        <div class="field"><label>Описание</label><textarea id="pDesc" rows="2" placeholder="Описание товара"></textarea></div>
         <div class="field-row">
-          <div class="field">
-            <label for="pCategory">Категория</label>
-            <input type="text" id="pCategory" placeholder="Щётки, Пасты, Гигиена...">
-          </div>
-          <div class="field">
-            <label for="pImage">Ссылка на изображение (необязательно)</label>
-            <input type="text" id="pImage" placeholder="https://...">
+          <div class="field"><label>Категория</label><input type="text" id="pCategory" placeholder="Щётки, Пасты..."></div>
+          <div class="field upload-area" id="uploadArea">
+            <label>Изображение</label>
+            <div class="upload-preview">
+              <img id="uploadPreview" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>📷</text></svg>" alt="">
+              <span class="upload-btn-text" id="uploadBtnText">Нажмите, чтобы загрузить</span>
+            </div>
+            <input type="file" id="pImageFile" accept="image/*">
+            <input type="hidden" id="pImage" value="">
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <input type="checkbox" id="pInStock" checked>
-          <label for="pInStock" style="font-size:14px">Товар в наличии</label>
+          <label for="pInStock" style="font-size:14px">В наличии</label>
         </div>
         <div class="actions">
           <button type="submit" class="btn btn--primary" id="formSubmit">Добавить товар</button>
           <button type="button" class="btn btn--ghost" id="formCancel" style="display:none">Отмена</button>
         </div>
-        <div class="admin-error" id="formError" style="display:block"></div>
-        <div class="form-info">После добавления товар сразу появится на сайте. Обновите страницу сайта, чтобы увидеть изменения.</div>
+        <div class="admin-error" id="formError"></div>
       </form>
-
       <div id="productList"></div>
+    </div>
 
-      <div style="margin-top:36px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <h2 style="font-size:18px">👥 Пользователи</h2>
+    <!-- ORDERS -->
+    <div class="admin-section" id="section-orders">
+      <div class="search-box"><input type="text" id="ordersSearch" placeholder="🔍 Поиск по заказам (имя, телефон, ID)..."></div>
+      <div class="orders-list" id="ordersList"></div>
+    </div>
+
+    <!-- PROMOCODES -->
+    <div class="admin-section" id="section-promocodes">
+      <form class="product-form" id="promoForm" style="grid-template-columns:1fr 1fr auto;align-items:end">
+        <div class="field"><label>Код *</label><input type="text" id="promoCode" required placeholder="SKIDKA10"></div>
+        <div class="field"><label>Скидка % *</label><input type="number" id="promoDiscount" required min="1" max="100" placeholder="10"></div>
+        <div class="field"><label>Макс. использований (0 = безлимит)</label><input type="number" id="promoMaxUses" placeholder="0" value="0"></div>
+        <button type="submit" class="btn btn--primary" id="promoSubmit" style="height:42px">➕ Создать</button>
+      </form>
+      <div id="promoList"></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="admin-section" id="section-users">
+      <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span style="color:var(--muted)">Зарегистрированные пользователи</span>
         <button class="btn btn--ghost btn--sm" id="loadUsersBtn">Обновить список</button>
       </div>
-      <div id="usersList" style="margin-top:12px;min-height:40px">
-        <div class="admin-empty">Нажмите «Обновить список»</div>
-      </div>
+      <div id="usersList"><div class="admin-empty">Нажмите «Обновить список»</div></div>
+    </div>
 
-      <div class="admin-notice">
-        <strong>Подсказка:</strong> Чтобы изменить порядок товаров — удалите и добавьте заново в нужном порядке.
-        Пароль администратора можно изменить в файле <strong>server.js</strong> (строка ADMIN_PASSWORD).
+    <!-- SETTINGS -->
+    <div class="admin-section" id="section-settings">
+      <div class="product-form">
+        <h2 style="font-family:'Montserrat',sans-serif;font-size:18px">⚙️ Настройки сайта</h2>
+        <div class="settings-grid" id="settingsGrid"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn--primary" id="settingsSaveBtn">💾 Сохранить настройки</button>
+          <span class="admin-error" id="settingsMsg" style="display:none;align-self:center;margin:0"></span>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const API_BASE = typeof API_URL !== 'undefined' ? API_URL : '';
-    let password = '';
-    let editingId = null;
+<script>
+const API_BASE = typeof API_URL !== 'undefined' ? API_URL : '';
+let password = '';
+let editingId = null;
 
-    const $ = (s, ctx = document) => ctx.querySelector(s);
-    const $$ = (s, ctx = document) => [...ctx.querySelectorAll(s)];
+const $ = (s, ctx) => (ctx || document).querySelector(s);
+const $$ = (s, ctx) => [...(ctx || document).querySelectorAll(s)];
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const loginForm = $('#loginForm');
-      const panelView = $('#panelView');
-      const loginView = $('#loginView');
-      const loginError = $('#loginError');
-      const togglePw = $('#togglePw');
-      const adminPass = $('#adminPass');
-      const logoutBtn = $('#logoutBtn');
-      const productForm = $('#productForm');
-      const formCancel = $('#formCancel');
-      const productList = $('#productList');
-
-      // Toggle password visibility
-      if (togglePw) {
-        togglePw.addEventListener('click', () => {
-          const t = adminPass;
-          t.type = t.type === 'password' ? 'text' : 'password';
-          togglePw.textContent = t.type === 'password' ? '👁' : '🙈';
-        });
-      }
-
-      // Login
-      if (loginForm) {
-        loginForm.addEventListener('submit', async e => {
-          e.preventDefault();
-          const pw = adminPass.value.trim();
-          if (!pw) return;
-          password = pw;
-          const ok = await checkPassword();
-          if (ok) {
-            loginView.style.display = 'none';
-            panelView.style.display = 'block';
-            loadProducts();
-          } else {
-            loginError.style.display = 'block';
-            password = '';
-          }
-        });
-      }
-
-      // Logout
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-          password = '';
-          editingId = null;
-          panelView.style.display = 'none';
-          loginView.style.display = 'block';
-          adminPass.value = '';
-          loginError.style.display = 'none';
-          productForm.reset();
-          formCancel.style.display = 'none';
-          $('#formTitle').textContent = '➕ Новый товар';
-          $('#formSubmit').textContent = 'Добавить товар';
-        });
-      }
-
-      // Verify password against server
-      async function checkPassword() {
-        try {
-          const r = await fetch(`${API_BASE}/api/verify-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
-          });
-          return r.ok;
-        } catch { return false; }
-      }
-
-      // Load products
-      async function loadProducts() {
-        try {
-          const r = await fetch(`${API_BASE}/api/products`);
-          if (!r.ok) throw new Error();
-          const products = await r.json();
-          renderProducts(products);
-        } catch {
-          productList.innerHTML = '<div class="admin-empty">Ошибка загрузки товаров</div>';
-        }
-      }
-
-      function renderProducts(products) {
-        if (!products || !products.length) {
-          productList.innerHTML = '<div class="admin-empty">Товаров пока нет. Добавьте первый товар!</div>';
-          return;
-        }
-        productList.innerHTML = '<div class="admin-grid">' + products.map(p => `
-          <div class="admin-card">
-            <div class="admin-card__info">
-              <div class="admin-card__name">${p.name}</div>
-              <div class="admin-card__meta">${p.category} · ${p.inStock ? 'в наличии' : 'нет в наличии'}</div>
-            </div>
-            <div class="admin-card__price">${p.price.toLocaleString()} руб</div>
-            <div class="admin-card__actions">
-              <button class="edit-btn" data-id="${p.id}">✏️ Изменить</button>
-              <button class="del-btn" data-id="${p.id}">🗑 Удалить</button>
-            </div>
-          </div>`).join('') + '</div>';
-
-        // Edit handlers
-        productList.querySelectorAll('.edit-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const id = Number(btn.dataset.id);
-            try {
-              const r = await fetch(`${API_BASE}/api/products`);
-              const products = await r.json();
-              const p = products.find(x => x.id === id);
-              if (!p) return;
-              editingId = id;
-              $('#pName').value = p.name;
-              $('#pPrice').value = p.price;
-              $('#pDesc').value = p.description || '';
-              $('#pCategory').value = p.category || '';
-              $('#pImage').value = p.image || '';
-              $('#pInStock').checked = p.inStock !== false;
-              $('#formTitle').textContent = '✏️ Редактировать товар';
-              $('#formSubmit').textContent = 'Сохранить';
-              formCancel.style.display = 'inline-flex';
-              $('#formError').style.display = 'none';
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch {}
-          });
-        });
-
-        // Delete handlers
-        productList.querySelectorAll('.del-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            if (!confirm('Удалить этот товар?')) return;
-            const id = Number(btn.dataset.id);
-            try {
-              const r = await fetch(`${API_BASE}/api/products/${id}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
-              });
-              if (r.ok) loadProducts();
-              else alert('Ошибка удаления');
-            } catch { alert('Ошибка удаления'); }
-          });
-        });
-      }
-
-      // Form submit (add or edit)
-      if (productForm) {
-        productForm.addEventListener('submit', async e => {
-          e.preventDefault();
-          const name = $('#pName').value.trim();
-          const price = $('#pPrice').value;
-          const desc = $('#pDesc').value.trim();
-          const category = $('#pCategory').value.trim();
-          const image = $('#pImage').value.trim();
-          const inStock = $('#pInStock').checked;
-          const errorEl = $('#formError');
-
-          if (!name || !price) {
-            errorEl.textContent = 'Заполните название и цену';
-            errorEl.style.display = 'block';
-            return;
-          }
-
-          const body = { password, name, price: Number(price), description: desc, category: category || 'Прочее', image, inStock };
-
-          try {
-            let r;
-            if (editingId) {
-              r = await fetch(`${API_BASE}/api/products/${editingId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-              });
-            } else {
-              r = await fetch(`${API_BASE}/api/products`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-              });
-            }
-            if (r.ok) {
-              productForm.reset();
-              $('#pInStock').checked = true;
-              editingId = null;
-              $('#formTitle').textContent = '➕ Новый товар';
-              $('#formSubmit').textContent = 'Добавить товар';
-              formCancel.style.display = 'none';
-              errorEl.style.display = 'none';
-              loadProducts();
-            } else {
-              const data = await r.json();
-              errorEl.textContent = data.error || 'Ошибка сохранения';
-              errorEl.style.display = 'block';
-            }
-          } catch {
-            errorEl.textContent = 'Ошибка сети';
-            errorEl.style.display = 'block';
-          }
-        });
-      }
-
-      // Cancel editing
-      if (formCancel) {
-        formCancel.addEventListener('click', () => {
-          editingId = null;
-          productForm.reset();
-          $('#pInStock').checked = true;
-          $('#formTitle').textContent = '➕ Новый товар';
-          $('#formSubmit').textContent = 'Добавить товар';
-          formCancel.style.display = 'none';
-          $('#formError').style.display = 'none';
-        });
-      }
-
-      // Load users
-      const loadUsersBtn = $('#loadUsersBtn');
-      if (loadUsersBtn) {
-        loadUsersBtn.addEventListener('click', async () => {
-          const el = $('#usersList');
-          el.innerHTML = '<div class="admin-empty">Загрузка...</div>';
-          try {
-            const r = await fetch(`${API_BASE}/api/users`, { headers: { 'Authorization': password } });
-            if (!r.ok) throw new Error();
-            const users = await r.json();
-            if (!users.length) {
-              el.innerHTML = '<div class="admin-empty">Нет зарегистрированных пользователей</div>';
-              return;
-            }
-            el.innerHTML = '<div class="admin-grid">' + users.map(u => `
-              <div class="admin-card">
-                <div class="admin-card__info">
-                  <div class="admin-card__name">${u.name}</div>
-                  <div class="admin-card__meta">${u.phone} · заказов: ${u.ordersCount}</div>
-                </div>
-              </div>`).join('') + '</div>';
-          } catch {
-            el.innerHTML = '<div class="admin-empty">Ошибка загрузки</div>';
-          }
-        });
-      }
+document.addEventListener('DOMContentLoaded', () => {
+  // Login
+  $('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const pw = $('#adminPass').value.trim();
+    if (!pw) return;
+    const r = await fetch(`${API_BASE}/api/verify-password`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
     });
-  </script>
+    const data = await r.json();
+    if (data.ok) {
+      password = pw;
+      $('#loginView').style.display = 'none';
+      $('#panelView').style.display = 'block';
+      loadStats();
+      loadProducts();
+      loadOrders();
+      loadPromocodes();
+      loadSettings();
+    } else {
+      $('#loginError').style.display = 'block';
+    }
+  });
+
+  $('#togglePw').addEventListener('click', () => {
+    const t = $('#adminPass');
+    t.type = t.type === 'password' ? 'text' : 'password';
+    $('#togglePw').textContent = t.type === 'password' ? '👁' : '🙈';
+  });
+
+  $('#logoutBtn').addEventListener('click', () => {
+    password = '';
+    editingId = null;
+    $('#panelView').style.display = 'none';
+    $('#loginView').style.display = 'block';
+    $('#adminPass').value = '';
+    $('#loginError').style.display = 'none';
+  });
+
+  // Tabs
+  $('#adminTabs').addEventListener('click', e => {
+    const tab = e.target.closest('.admin-tab');
+    if (!tab) return;
+    $$('.admin-tab').forEach(t => t.classList.remove('is-active'));
+    tab.classList.add('is-active');
+    $$('.admin-section').forEach(s => s.classList.remove('is-visible'));
+    const section = $(`#section-${tab.dataset.section}`);
+    if (section) section.classList.add('is-visible');
+    if (tab.dataset.section === 'orders') loadOrders();
+    if (tab.dataset.section === 'stats') loadStats();
+  });
+
+  // Image upload preview
+  $('#pImageFile').addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Файл слишком большой (макс 5MB)'); return; }
+    $('#uploadBtnText').textContent = 'Загрузка...';
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('password', password);
+    try {
+      const r = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: fd });
+      const data = await r.json();
+      if (r.ok) {
+        $('#pImage').value = data.url;
+        $('#uploadPreview').src = data.url;
+        $('#uploadBtnText').textContent = '✅ Загружено';
+      } else { alert(data.error); $('#uploadBtnText').textContent = 'Ошибка'; }
+    } catch { alert('Ошибка загрузки'); $('#uploadBtnText').textContent = 'Ошибка'; }
+  });
+
+  // Product form
+  $('#productForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = $('#pName').value.trim();
+    const price = $('#pPrice').value;
+    if (!name || !price) { $('#formError').textContent = 'Заполните название и цену'; $('#formError').style.display = 'block'; return; }
+    const body = { password, name, price: Number(price), description: $('#pDesc').value.trim(), category: $('#pCategory').value.trim() || 'Прочее', image: $('#pImage').value, inStock: $('#pInStock').checked };
+    try {
+      let r;
+      if (editingId) r = await fetch(`${API_BASE}/api/products/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      else r = await fetch(`${API_BASE}/api/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (r.ok) {
+        $('#productForm').reset(); $('#pInStock').checked = true; editingId = null;
+        $('#formTitle').textContent = '➕ Новый товар'; $('#formSubmit').textContent = 'Добавить товар';
+        $('#formCancel').style.display = 'none'; $('#formError').style.display = 'none';
+        $('#pImage').value = ''; $('#uploadPreview').src = ''; $('#uploadBtnText').textContent = 'Нажмите, чтобы загрузить';
+        loadProducts();
+      } else { const d = await r.json(); $('#formError').textContent = d.error || 'Ошибка'; $('#formError').style.display = 'block'; }
+    } catch { $('#formError').textContent = 'Ошибка сети'; $('#formError').style.display = 'block'; }
+  });
+
+  $('#formCancel').addEventListener('click', () => {
+    editingId = null; $('#productForm').reset(); $('#pInStock').checked = true;
+    $('#formTitle').textContent = '➕ Новый товар'; $('#formSubmit').textContent = 'Добавить товар';
+    $('#formCancel').style.display = 'none'; $('#formError').style.display = 'none';
+    $('#pImage').value = ''; $('#uploadPreview').src = ''; $('#uploadBtnText').textContent = 'Нажмите, чтобы загрузить';
+  });
+
+  // Promo form
+  $('#promoForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const code = $('#promoCode').value.trim().toUpperCase();
+    const discount = Number($('#promoDiscount').value);
+    if (!code || !discount) return;
+    try {
+      const r = await fetch(`${API_BASE}/api/promocodes`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': password },
+        body: JSON.stringify({ code, discount, max_uses: Number($('#promoMaxUses').value) || 0 })
+      });
+      if (r.ok) { $('#promoForm').reset(); loadPromocodes(); }
+      else { const d = await r.json(); alert(d.error || 'Ошибка'); }
+    } catch { alert('Ошибка сети'); }
+  });
+
+  // Settings save
+  $('#settingsSaveBtn').addEventListener('click', async () => {
+    const body = { password };
+    $$('#settingsGrid .setting-field').forEach(el => {
+      const key = el.dataset.key;
+      const input = el.querySelector('input, textarea');
+      if (key && input) body[key] = input.value;
+    });
+    try {
+      const r = await fetch(`${API_BASE}/api/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const msg = $('#settingsMsg');
+      if (r.ok) { msg.textContent = '✅ Сохранено'; msg.style.display = 'inline'; msg.style.color = '#15803D'; setTimeout(() => msg.style.display = 'none', 2500); }
+      else { msg.textContent = '❌ Ошибка'; msg.style.display = 'inline'; }
+    } catch { alert('Ошибка сети'); }
+  });
+
+  // Users
+  $('#loadUsersBtn').addEventListener('click', loadUsers);
+
+  // Orders search
+  $('#ordersSearch').addEventListener('input', () => loadOrders());
+});
+
+// ===== STATS =====
+async function loadStats() {
+  try {
+    const r = await fetch(`${API_BASE}/api/admin/stats`, { headers: { 'Authorization': password } });
+    if (!r.ok) return;
+    const s = await r.json();
+    const { data: weekData } = await fetch(`${API_BASE}/api/admin/orders`, { headers: { 'Authorization': password } }).then(r => r.json()).catch(() => ({ data: [] }));
+    const ords = weekData || [];
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const weekOrders = ords.filter(o => o.date >= weekAgo).length;
+    const totalOrders = s.totalOrders || 0;
+
+    $('#statsGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-card__num">${s.totalOrders}</div><div class="stat-card__label">Всего заказов</div></div>
+      <div class="stat-card stat-card--gold"><div class="stat-card__num">${s.totalRevenue.toLocaleString()}</div><div class="stat-card__label">Выручка (руб)</div></div>
+      <div class="stat-card stat-card--green"><div class="stat-card__num">${s.todayOrders}</div><div class="stat-card__label">Заказов сегодня</div></div>
+      <div class="stat-card"><div class="stat-card__num">${s.totalUsers}</div><div class="stat-card__label">Пользователей</div></div>
+      <div class="stat-card" style="grid-column:1/-1">
+        <div style="font-weight:600;margin-bottom:8px">Статусы заказов</div>
+        <div class="status-bars" id="statusBars"></div>
+      </div>`;
+    const bars = $('#statusBars');
+    const statusLabels = { new: 'Новые', work: 'В работе', done: 'Готово', cancel: 'Отменён' };
+    const statusColors = { new: '#0369A1', work: '#A16207', done: '#15803D', cancel: '#B91C1C' };
+    let maxCount = Math.max(...Object.values(s.statuses), 1);
+    Object.entries(s.statuses).forEach(([k, v]) => {
+      const pct = Math.round((v / maxCount) * 100);
+      bars.innerHTML += `<div class="status-bar"><span class="status-bar__label">${statusLabels[k] || k}</span><div class="status-bar__track"><div class="status-bar__fill" style="width:${pct}%;background:${statusColors[k] || '#999'}"></div></div><span class="status-bar__count">${v}</span></div>`;
+    });
+  } catch {}
+}
+
+// ===== PRODUCTS =====
+async function loadProducts() {
+  try {
+    const r = await fetch(`${API_BASE}/api/products`);
+    if (!r.ok) throw Error();
+    const products = await r.json();
+    const el = $('#productList');
+    if (!products.length) { el.innerHTML = '<div class="admin-empty">Товаров пока нет</div>'; return; }
+    el.innerHTML = products.map(p => `
+      <div class="product-card">
+        <div class="product-card__img">${p.image ? `<img src="${p.image}" alt="">` : '📦'}</div>
+        <div class="product-card__info">
+          <div class="product-card__name">${p.name} <span style="font-weight:400;color:var(--muted);font-size:12px">(${p.category})</span></div>
+          <div class="product-card__meta">${p.inStock ? '✅ в наличии' : '❌ нет'}</div>
+        </div>
+        <div class="product-card__price">${p.price.toLocaleString()} руб</div>
+        <div class="product-card__actions">
+          <button class="edit-btn" data-id="${p.id}">✏️</button>
+          <button class="del-btn" data-id="${p.id}">🗑</button>
+        </div>
+      </div>`).join('');
+    el.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', async () => {
+      const p = products.find(x => x.id === Number(btn.dataset.id));
+      if (!p) return;
+      editingId = p.id;
+      $('#pName').value = p.name; $('#pPrice').value = p.price; $('#pDesc').value = p.description || '';
+      $('#pCategory').value = p.category || ''; $('#pInStock').checked = p.inStock !== false;
+      $('#pImage').value = p.image || '';
+      if (p.image) { $('#uploadPreview').src = p.image; $('#uploadBtnText').textContent = '✅ Загружено'; }
+      else { $('#uploadPreview').src = ''; $('#uploadBtnText').textContent = 'Нажмите, чтобы загрузить'; }
+      $('#formTitle').textContent = '✏️ Редактировать'; $('#formSubmit').textContent = 'Сохранить';
+      $('#formCancel').style.display = 'inline-flex'; $('#formError').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }));
+    el.querySelectorAll('.del-btn').forEach(btn => btn.addEventListener('click', async () => {
+      if (!confirm('Удалить товар?')) return;
+      const r = await fetch(`${API_BASE}/api/products/${btn.dataset.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
+      if (r.ok) loadProducts();
+    }));
+  } catch { $('#productList').innerHTML = '<div class="admin-empty">Ошибка загрузки</div>'; }
+}
+
+// ===== ORDERS =====
+async function loadOrders() {
+  try {
+    const r = await fetch(`${API_BASE}/api/admin/orders`, { headers: { 'Authorization': password } });
+    if (!r.ok) throw Error();
+    let orders = await r.json();
+    const query = ($('#ordersSearch').value || '').toLowerCase();
+    if (query) orders = orders.filter(o => o.name?.toLowerCase().includes(query) || o.phone?.includes(query) || String(o.id).includes(query));
+    const el = $('#ordersList');
+    if (!orders.length) { el.innerHTML = '<div class="admin-empty">Заказов пока нет</div>'; return; }
+    const statusLabels = { new: 'Новый', work: 'В работе', done: 'Готов', cancel: 'Отменён' };
+    el.innerHTML = orders.map(o => {
+      const itemsHtml = (o.items || []).map(it => `${it.name} × ${it.quantity}`).join(', ');
+      const statusClass = `order-card__status--${o.status || 'new'}`;
+      return `<div class="order-card">
+        <div class="order-card__top">
+          <div><span class="order-card__id">#${o.id}</span> <span class="order-card__date">${new Date(o.date).toLocaleString('ru-RU')}</span></div>
+          <span class="order-card__status ${statusClass}">${statusLabels[o.status] || o.status}</span>
+        </div>
+        <div class="order-card__client">
+          ${o.name} · <a href="tel:${o.phone}">${o.phone}</a>
+          ${o.address ? ` · ${o.address}` : ''}
+        </div>
+        <div class="order-card__items">${itemsHtml}</div>
+        <div class="order-card__total">${o.total.toLocaleString()} руб</div>
+        ${o.promocode ? `<div style="font-size:12px;color:var(--muted)">🏷 Промокод: ${o.promocode} (-${o.discount} руб)</div>` : ''}
+        <div class="order-card__actions">
+          <select class="order-status" data-id="${o.id}">
+            <option value="new" ${o.status === 'new' ? 'selected' : ''}>Новый</option>
+            <option value="work" ${o.status === 'work' ? 'selected' : ''}>В работе</option>
+            <option value="done" ${o.status === 'done' ? 'selected' : ''}>Готов</option>
+            <option value="cancel" ${o.status === 'cancel' ? 'selected' : ''}>Отменён</option>
+          </select>
+          <input type="text" class="order-notes" data-id="${o.id}" placeholder="Заметка" value="${o.notes || ''}">
+          <button class="order-save" data-id="${o.id}">Сохранить</button>
+        </div>
+        ${o.comment ? `<div class="order-card__notes">💬 ${o.comment}</div>` : ''}
+      </div>`;
+    }).join('');
+    el.querySelectorAll('.order-save').forEach(btn => btn.addEventListener('click', async () => {
+      const id = Number(btn.dataset.id);
+      const card = btn.closest('.order-card');
+      const status = card.querySelector('.order-status').value;
+      const notes = card.querySelector('.order-notes').value;
+      await fetch(`${API_BASE}/api/admin/orders/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': password }, body: JSON.stringify({ status, notes }) });
+      loadOrders();
+    }));
+  } catch { $('#ordersList').innerHTML = '<div class="admin-empty">Ошибка загрузки</div>'; }
+}
+
+// ===== PROMOCODES =====
+async function loadPromocodes() {
+  try {
+    const r = await fetch(`${API_BASE}/api/promocodes`, { headers: { 'Authorization': password } });
+    if (!r.ok) throw Error();
+    const codes = await r.json();
+    const el = $('#promoList');
+    if (!codes.length) { el.innerHTML = '<div class="admin-empty">Промокодов пока нет</div>'; return; }
+    el.innerHTML = codes.map(c => `
+      <div class="promo-card">
+        <div>
+          <div class="promo-card__code">📄 ${c.code}</div>
+          <div class="promo-card__info">Скидка: ${c.discount}% · Использован: ${c.used_count}${c.max_uses ? `/${c.max_uses}` : ''} ${c.active ? '✅' : '❌'}</div>
+        </div>
+        <div class="promo-card__actions">
+          <button class="toggle-promo" data-code="${c.code}" data-active="${c.active}">${c.active ? '🔴 Выкл' : '🟢 Вкл'}</button>
+          <button class="del-promo" data-code="${c.code}">🗑</button>
+        </div>
+      </div>`).join('');
+    el.querySelectorAll('.toggle-promo').forEach(btn => btn.addEventListener('click', async () => {
+      const active = btn.dataset.active === 'true' ? false : true;
+      await fetch(`${API_BASE}/api/promocodes/${btn.dataset.code}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': password }, body: JSON.stringify({ active }) });
+      loadPromocodes();
+    }));
+    el.querySelectorAll('.del-promo').forEach(btn => btn.addEventListener('click', async () => {
+      if (!confirm('Удалить промокод?')) return;
+      await fetch(`${API_BASE}/api/promocodes/${btn.dataset.code}`, { method: 'DELETE', headers: { 'Authorization': password } });
+      loadPromocodes();
+    }));
+  } catch { $('#promoList').innerHTML = '<div class="admin-empty">Ошибка загрузки</div>'; }
+}
+
+// ===== USERS =====
+async function loadUsers() {
+  const el = $('#usersList');
+  el.innerHTML = '<div class="admin-empty">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API_BASE}/api/users`, { headers: { 'Authorization': password } });
+    if (!r.ok) throw Error();
+    const users = await r.json();
+    if (!users.length) { el.innerHTML = '<div class="admin-empty">Нет пользователей</div>'; return; }
+    el.innerHTML = users.map(u => `
+      <div class="product-card">
+        <div class="product-card__info">
+          <div class="product-card__name">${u.name}</div>
+          <div class="product-card__meta">${u.phone} · заказов: ${u.ordersCount} · ${new Date(u.createdAt).toLocaleDateString('ru-RU')}</div>
+        </div>
+      </div>`).join('');
+  } catch { el.innerHTML = '<div class="admin-empty">Ошибка загрузки</div>'; }
+}
+
+// ===== SETTINGS =====
+async function loadSettings() {
+  try {
+    const r = await fetch(`${API_BASE}/api/settings`);
+    if (!r.ok) throw Error();
+    const settings = await r.json();
+    const fields = [
+      { key: 'site_name', label: 'Название сайта', type: 'text' },
+      { key: 'about_text', label: 'Текст "О клинике"', type: 'textarea' },
+      { key: 'contact_phone', label: 'Телефон', type: 'text' },
+      { key: 'working_hours', label: 'Часы работы', type: 'text' },
+      { key: 'address', label: 'Адрес', type: 'text' }
+    ];
+    $('#settingsGrid').innerHTML = fields.map(f => `
+      <div class="setting-field" data-key="${f.key}">
+        <label for="set-${f.key}">${f.label}</label>
+        ${f.type === 'textarea'
+          ? `<textarea id="set-${f.key}">${(settings[f.key] || '')}</textarea>`
+          : `<input type="text" id="set-${f.key}" value="${(settings[f.key] || '').replace(/"/g, '&quot;')}">`}
+      </div>`).join('');
+  } catch { $('#settingsGrid').innerHTML = '<div class="admin-empty">Ошибка загрузки настроек</div>'; }
+}
+</script>
 </body>
 </html>

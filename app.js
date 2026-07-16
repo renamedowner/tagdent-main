@@ -563,6 +563,71 @@ async function loadShopProducts() {
   initShopSort();
 }
 
+// ===== PROMO =====
+let promoApplied = null;
+
+function initPromo() {
+  const field = $('#promoField');
+  const applyBtn = $('#promoApplyBtn');
+  const input = $('#co-promo');
+  const msg = $('#promoMsg');
+  if (!field || !applyBtn || !input) return;
+  applyBtn.addEventListener('click', async () => {
+    const code = input.value.trim();
+    if (!code) { msg.textContent = 'Введите код'; msg.style.color = '#DC2626'; return; }
+    applyBtn.disabled = true;
+    applyBtn.textContent = '...';
+    try {
+      const r = await fetch(API_URL + '/api/promocodes/verify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await r.json();
+      if (data.valid) {
+        promoApplied = data;
+        msg.textContent = `✅ Промокод: скидка ${data.discount}%`;
+        msg.style.color = '#15803D';
+        updateCartTotalWithDiscount();
+      } else {
+        promoApplied = null;
+        msg.textContent = data.error || '❌ Промокод недействителен';
+        msg.style.color = '#DC2626';
+        updateCartTotalWithDiscount();
+      }
+    } catch { msg.textContent = 'Ошибка'; msg.style.color = '#DC2626'; }
+    applyBtn.disabled = false;
+    applyBtn.textContent = 'Применить';
+  });
+}
+
+function updateCartTotalWithDiscount() {
+  const sum = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+  const totalSum = $('#cartTotalSum');
+  const discountEl = $('#cartDiscount');
+  if (!totalSum) return;
+  if (promoApplied && sum > 0) {
+    const discount = Math.round(sum * promoApplied.discount / 100);
+    const finalSum = sum - discount;
+    totalSum.innerHTML = `${finalSum.toLocaleString()} руб <span style="font-size:12px;color:var(--muted);text-decoration:line-through">${sum.toLocaleString()} руб</span>`;
+    if (!discountEl) {
+      const total = $('#cartTotal');
+      if (total) {
+        const d = document.createElement('div');
+        d.id = 'cartDiscount';
+        d.style.cssText = 'font-size:13px;color:var(--muted);text-align:right;margin-top:-8px';
+        d.textContent = `🏷 Скидка: -${discount} руб (${promoApplied.discount}%)`;
+        total.after(d);
+      }
+    } else {
+      discountEl.textContent = `🏷 Скидка: -${discount} руб (${promoApplied.discount}%)`;
+      discountEl.style.display = 'block';
+    }
+  } else {
+    totalSum.textContent = sum.toLocaleString() + ' руб';
+    if (discountEl) discountEl.style.display = 'none';
+  }
+}
+
 // ===== CART =====
 function renderCartItems() {
   const container = $('#cartItems');
@@ -592,6 +657,7 @@ function renderCartItems() {
     </div>`).join('');
   const sum = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   if (totalSum) totalSum.textContent = sum.toLocaleString() + ' руб';
+  updateCartTotalWithDiscount();
   container.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = Number(btn.dataset.idx);
@@ -612,10 +678,25 @@ function initCartModal() {
   const closeBtn = $('#cartModalClose');
   const openBtn = $('#cartBtn');
   const form = $('#cartForm');
-  openBtn?.addEventListener('click', () => { renderCartItems(); overlay?.classList.add('is-open'); document.body.style.overflow = 'hidden'; });
-  closeBtn?.addEventListener('click', () => { overlay?.classList.remove('is-open'); document.body.style.overflow = ''; const s = $('#cartSuccess'); if (s) s.classList.remove('is-visible'); });
-  overlay?.addEventListener('click', e => { if (e.target === overlay) { overlay.classList.remove('is-open'); document.body.style.overflow = ''; } });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay?.classList.contains('is-open')) { overlay.classList.remove('is-open'); document.body.style.overflow = ''; } });
+  openBtn?.addEventListener('click', () => {
+    renderCartItems();
+    overlay?.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    const pf = $('#promoField');
+    if (pf) pf.style.display = 'block';
+    if (!promoApplied) { const msg = $('#promoMsg'); if (msg) msg.textContent = ''; }
+  });
+  function closeCartModal() {
+    overlay?.classList.remove('is-open'); document.body.style.overflow = '';
+    const s = $('#cartSuccess'); if (s) s.classList.remove('is-visible');
+    $('#promoField').style.display = 'none';
+    const pMsg = $('#promoMsg'); if (pMsg) pMsg.textContent = '';
+    const input = $('#co-promo'); if (input) input.value = '';
+    updateCartTotalWithDiscount();
+  }
+  closeBtn?.addEventListener('click', closeCartModal);
+  overlay?.addEventListener('click', e => { if (e.target === overlay) closeCartModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay?.classList.contains('is-open')) closeCartModal(); });
   phoneMask($('#co-phone'));
   if (form) {
     form.addEventListener('submit', async e => {
@@ -631,10 +712,10 @@ function initCartModal() {
       try {
         const r = await fetch(API_URL + '/api/order', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: cart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity })), name: name.value.trim(), phone: phone.value.trim(), address: address?.value?.trim() || '', comment: comment?.value?.trim() || '', token: localStorage.getItem('tagdent_token') || '' })
+          body: JSON.stringify({ items: cart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity })), name: name.value.trim(), phone: phone.value.trim(), address: address?.value?.trim() || '', comment: comment?.value?.trim() || '', token: localStorage.getItem('tagdent_token') || '', promocode: promoApplied?.code || '' })
         });
         if (r.ok) {
-          cart = []; saveCart(); renderCartItems(); renderShop();
+          cart = []; promoApplied = null; saveCart(); renderCartItems(); renderShop();
           if (success) success.classList.add('is-visible');
           toast('Заказ отправлен! Мы свяжемся с вами.', 'success');
           form.reset();
@@ -816,6 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initProductModal();
   initAuth();
   initCookieBanner();
+  initPromo();
   loadShopProducts();
   updateCartCount();
 });
