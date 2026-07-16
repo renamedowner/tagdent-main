@@ -363,7 +363,7 @@
           const el = $('#usersList');
           el.innerHTML = '<div class="admin-empty">Загрузка...</div>';
           try {
-            const r = await fetch(`${API_BASE}/api/users?password=${encodeURIComponent(password)}`);
+            const r = await fetch(`${API_BASE}/api/users`, { headers: { 'Authorization': password } });
             if (!r.ok) throw new Error();
             const users = await r.json();
             if (!users.length) {
