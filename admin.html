@@ -122,6 +122,15 @@
       </form>
 
       <div id="productList"></div>
+
+      <div style="margin-top:36px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <h2 style="font-size:18px">👥 Пользователи</h2>
+        <button class="btn btn--ghost btn--sm" id="loadUsersBtn">Обновить список</button>
+      </div>
+      <div id="usersList" style="margin-top:12px;min-height:40px">
+        <div class="admin-empty">Нажмите «Обновить список»</div>
+      </div>
+
       <div class="admin-notice">
         <strong>Подсказка:</strong> Чтобы изменить порядок товаров — удалите и добавьте заново в нужном порядке.
         Пароль администратора можно изменить в файле <strong>server.js</strong> (строка ADMIN_PASSWORD).
@@ -344,6 +353,33 @@
           $('#formSubmit').textContent = 'Добавить товар';
           formCancel.style.display = 'none';
           $('#formError').style.display = 'none';
+        });
+      }
+
+      // Load users
+      const loadUsersBtn = $('#loadUsersBtn');
+      if (loadUsersBtn) {
+        loadUsersBtn.addEventListener('click', async () => {
+          const el = $('#usersList');
+          el.innerHTML = '<div class="admin-empty">Загрузка...</div>';
+          try {
+            const r = await fetch(`${API_BASE}/api/users?password=${encodeURIComponent(password)}`);
+            if (!r.ok) throw new Error();
+            const users = await r.json();
+            if (!users.length) {
+              el.innerHTML = '<div class="admin-empty">Нет зарегистрированных пользователей</div>';
+              return;
+            }
+            el.innerHTML = '<div class="admin-grid">' + users.map(u => `
+              <div class="admin-card">
+                <div class="admin-card__info">
+                  <div class="admin-card__name">${u.name}</div>
+                  <div class="admin-card__meta">${u.phone} · заказов: ${u.ordersCount}</div>
+                </div>
+              </div>`).join('') + '</div>';
+          } catch {
+            el.innerHTML = '<div class="admin-empty">Ошибка загрузки</div>';
+          }
         });
       }
     });
